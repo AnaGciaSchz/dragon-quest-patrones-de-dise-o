@@ -4,9 +4,19 @@ import com.taller.patrones.domain.Attack;
 import com.taller.patrones.domain.Battle;
 import com.taller.patrones.domain.Character;
 import com.taller.patrones.infrastructure.combat.CombatEngine;
+import com.taller.patrones.infrastructure.combat.attackFactory.AttackFactory;
+import com.taller.patrones.infrastructure.combat.attackFactory.FireballAttackFactory;
+import com.taller.patrones.infrastructure.combat.attackFactory.GolpeAttackFactory;
+import com.taller.patrones.infrastructure.combat.attackFactory.IceBeamAttackFactory;
+import com.taller.patrones.infrastructure.combat.attackFactory.MeteorAttackFactory;
+import com.taller.patrones.infrastructure.combat.attackFactory.PoisonStingAttackFactory;
+import com.taller.patrones.infrastructure.combat.attackFactory.SlashAttackFactory;
+import com.taller.patrones.infrastructure.combat.attackFactory.TackleAttackFactory;
+import com.taller.patrones.infrastructure.combat.attackFactory.ThunderAttackFactory;
 import com.taller.patrones.infrastructure.persistence.BattleRepository;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -19,6 +29,16 @@ public class BattleService {
 
     private final CombatEngine combatEngine = new CombatEngine();
     private final BattleRepository battleRepository = new BattleRepository();
+    private final Map<String, AttackFactory> factoryMap = Map.of(
+            "TACKLE", new TackleAttackFactory(),
+            "SLASH", new SlashAttackFactory(),
+            "FIREBALL", new FireballAttackFactory(),
+            "ICE_BEAM", new IceBeamAttackFactory(),
+            "POISON_STING", new PoisonStingAttackFactory(),
+            "THUNDER", new ThunderAttackFactory(),
+            "METEOR", new MeteorAttackFactory(),
+            "GOLPE",  new GolpeAttackFactory()
+    );
 
     public static final List<String> PLAYER_ATTACKS = List.of("TACKLE", "SLASH", "FIREBALL", "ICE_BEAM", "POISON_STING", "THUNDER");
     public static final List<String> ENEMY_ATTACKS = List.of("TACKLE", "SLASH", "FIREBALL");
@@ -49,7 +69,8 @@ public class BattleService {
         Battle battle = battleRepository.findById(battleId);
         if (battle == null || battle.isFinished() || !battle.isPlayerTurn()) return;
 
-        Attack attack = combatEngine.createAttack(attackName);
+        combatEngine.setAttackFactory(factoryMap.getOrDefault(attackName, new GolpeAttackFactory()));
+        Attack attack = combatEngine.createAttack();
         int damage = combatEngine.calculateDamage(battle.getPlayer(), battle.getEnemy(), attack);
         applyDamage(battle, battle.getPlayer(), battle.getEnemy(), damage, attack);
     }
@@ -58,7 +79,8 @@ public class BattleService {
         Battle battle = battleRepository.findById(battleId);
         if (battle == null || battle.isFinished() || battle.isPlayerTurn()) return;
 
-        Attack attack = combatEngine.createAttack(attackName != null ? attackName : "TACKLE");
+        combatEngine.setAttackFactory(factoryMap.getOrDefault(attackName, new GolpeAttackFactory()));
+        Attack attack = combatEngine.createAttack();
         int damage = combatEngine.calculateDamage(battle.getEnemy(), battle.getPlayer(), attack);
         applyDamage(battle, battle.getEnemy(), battle.getPlayer(), damage, attack);
     }
