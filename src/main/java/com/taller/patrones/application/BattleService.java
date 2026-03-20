@@ -33,7 +33,7 @@ import java.util.UUID;
 public class BattleService {
 
     private final CombatEngine combatEngine = new CombatEngine();
-    private final BattleRepository battleRepository = new BattleRepository();
+    private final BattleRepository battleRepository = BattleRepository.getInstance();
     private final Map<String, AttackFactory> attackFactoryMap = Map.of(
             "TACKLE", new TackleAttackFactory(),
             "SLASH", new SlashAttackFactory(),
