@@ -28,7 +28,8 @@ public class ApplyDamageCommand implements AttackCommand {
     @Override
     public void execute() {
         defenderHpBeforeAttack = defender.getCurrentHp();
-        logEntryBeforeAttack = battle.getBattleLog().isEmpty() ? null : battle.getBattleLog().get(battle.getBattleLog().size() - 1);
+        logEntryBeforeAttack = battle.getBattleLog().isEmpty() ? null
+                : battle.getBattleLog().get(battle.getBattleLog().size() - 1);
         lastDamageBeforeAttack = battle.getLastDamage();
         lastDamageTargetBeforeAttack = battle.getLastDamageTarget();
 

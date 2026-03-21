@@ -49,21 +49,19 @@ public class BattleService {
             "POISON_STING", new PoisonStingAttackFactory(),
             "THUNDER", new ThunderAttackFactory(),
             "METEOR", new MeteorAttackFactory(),
-            "GOLPE", new GolpeAttackFactory()
-    );
+            "GOLPE", new GolpeAttackFactory());
     private final Map<Attack.AttackType, DamageStrategy> damageStrategyMap = Map.of(
             Attack.AttackType.NORMAL, new NormalDamageStrategy(),
             Attack.AttackType.SPECIAL, new SpecialDamageStrategy(),
             Attack.AttackType.STATUS, new StatusDamageStrategy(),
-            Attack.AttackType.CRITICAL, new CriticalDamageStrategy()
-    );
+            Attack.AttackType.CRITICAL, new CriticalDamageStrategy());
     private final List<BattleEventListener> listeners = List.of(
             new AnalyticsListener(),
-            new AnalyticsLogListener()
-    );
+            new AnalyticsLogListener());
     private final Map<Battle, Deque<AttackCommand>> commandhistory = new HashMap<>();
 
-    public static final List<String> PLAYER_ATTACKS = List.of("TACKLE", "SLASH", "FIREBALL", "ICE_BEAM", "POISON_STING", "THUNDER");
+    public static final List<String> PLAYER_ATTACKS = List.of("TACKLE", "SLASH", "FIREBALL", "ICE_BEAM", "POISON_STING",
+            "THUNDER");
     public static final List<String> ENEMY_ATTACKS = List.of("TACKLE", "SLASH", "FIREBALL");
 
     public BattleStartResult startBattle(String playerName, String enemyName) {
@@ -76,7 +74,7 @@ public class BattleService {
                 .build();
 
         Character enemy = Character.builder()
-                .name(playerName != null ? playerName : "Dragón")
+                .name(enemyName != null ? playerName : "Dragón")
                 .maxHp(120)
                 .attack(30)
                 .defense(10)
@@ -96,7 +94,8 @@ public class BattleService {
 
     public void executePlayerAttack(String battleId, String attackName) {
         Battle battle = getBattle(battleId);
-        if (battle == null || battle.isFinished() || !battle.isPlayerTurn()) return;
+        if (battle == null || battle.isFinished() || !battle.isPlayerTurn())
+            return;
 
         combatEngine.setAttackFactory(attackFactoryMap.get(attackName));
         Attack attack = combatEngine.createAttack();
@@ -107,7 +106,8 @@ public class BattleService {
 
     public void executeEnemyAttack(String battleId, String attackName) {
         Battle battle = getBattle(battleId);
-        if (battle == null || battle.isFinished() || battle.isPlayerTurn()) return;
+        if (battle == null || battle.isFinished() || battle.isPlayerTurn())
+            return;
 
         combatEngine.setAttackFactory(attackFactoryMap.getOrDefault(attackName, new TackleAttackFactory()));
         Attack attack = combatEngine.createAttack();
