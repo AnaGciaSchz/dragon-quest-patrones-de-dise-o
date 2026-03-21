@@ -115,24 +115,7 @@ public class BattleService {
         }
     }
 
-    public BattleStartResult startBattleFromExternal(String fighter1Name, int fighter1Hp, int fighter1Atk,
-                                                     String fighter2Name, int fighter2Hp, int fighter2Atk) {
-        Character player = Character.builder()
-                .name(fighter1Name)
-                .maxHp(fighter1Hp)
-                .attack(fighter1Hp)
-                .defense(10)
-                .speed(10)
-                .build();
-
-        Character enemy = Character.builder()
-                .name(fighter2Name)
-                .maxHp(fighter2Hp)
-                .attack(fighter2Atk)
-                .defense(10)
-                .speed(10)
-                .build();
-
+    public BattleStartResult startBattleFromExternal(Character player, Character enemy) {
         Battle battle = new Battle(player, enemy);
         String battleId = UUID.randomUUID().toString();
         battleRepository.save(battleId, battle);
