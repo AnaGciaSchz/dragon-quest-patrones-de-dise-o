@@ -14,6 +14,7 @@ import com.taller.patrones.infrastructure.combat.DamageStrategy.DamageStrategy;
 import com.taller.patrones.infrastructure.combat.DamageStrategy.NormalDamageStrategy;
 import com.taller.patrones.infrastructure.combat.DamageStrategy.SpecialDamageStrategy;
 import com.taller.patrones.infrastructure.combat.DamageStrategy.StatusDamageStrategy;
+import com.taller.patrones.domain.composite.AttackComponent;
 import com.taller.patrones.infrastructure.combat.attackFactory.AttackFactory;
 import com.taller.patrones.infrastructure.combat.attackFactory.FireballAttackFactory;
 import com.taller.patrones.infrastructure.combat.attackFactory.GolpeAttackFactory;
@@ -41,7 +42,7 @@ public class BattleService {
 
     private final CombatEngine combatEngine = new CombatEngine();
     private final BattleRepository battleRepository = BattleRepository.getInstance();
-    private final Map<String, AttackFactory> attackFactoryMap = Map.of(
+    private final Map<String, AttackFactory> attackFactoryMap = new java.util.HashMap<>(Map.of(
             "TACKLE", new TackleAttackFactory(),
             "SLASH", new SlashAttackFactory(),
             "FIREBALL", new FireballAttackFactory(),
@@ -49,7 +50,7 @@ public class BattleService {
             "POISON_STING", new PoisonStingAttackFactory(),
             "THUNDER", new ThunderAttackFactory(),
             "METEOR", new MeteorAttackFactory(),
-            "GOLPE", new GolpeAttackFactory());
+            "GOLPE", new GolpeAttackFactory()));
     private final Map<Attack.AttackType, DamageStrategy> damageStrategyMap = Map.of(
             Attack.AttackType.NORMAL, new NormalDamageStrategy(),
             Attack.AttackType.SPECIAL, new SpecialDamageStrategy(),
@@ -126,6 +127,24 @@ public class BattleService {
 
         for (BattleEventListener listener : listeners) {
             listener.update(battle, attacker, defender, damage, attack);
+        }
+    }
+
+    public void executePlayerCombo(String battleId, AttackComponent combo) {
+        Battle battle = getBattle(battleId);
+        if (battle == null || battle.isFinished() || !battle.isPlayerTurn())
+            return;
+
+        for (Attack attack : combo.getAttacks()) {
+            if (battle.isFinished())
+                break;
+
+            combatEngine.setDamageStrategy(damageStrategyMap.get(attack.getType()));
+            int damage = combatEngine.calculateDamage(battle.getPlayer(), battle.getEnemy(), attack);
+            applyDamage(battle, battle.getPlayer(), battle.getEnemy(), damage, attack);
+
+            if (!battle.isFinished())
+                battle.switchTurn();
         }
     }
 

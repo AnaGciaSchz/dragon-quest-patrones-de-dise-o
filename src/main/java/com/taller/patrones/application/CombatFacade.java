@@ -3,6 +3,7 @@ package com.taller.patrones.application;
 import com.taller.patrones.application.BattleService.BattleStartResult;
 import com.taller.patrones.domain.Battle;
 import com.taller.patrones.domain.Character;
+import com.taller.patrones.infrastructure.combat.attackFactory.ComboTripleAttackFactory;
 
 import java.util.List;
 
@@ -39,7 +40,9 @@ public class CombatFacade {
         if (battle == null || battle.isFinished())
             return battle;
 
-        if (battle.isPlayerTurn()) {
+        if ("COMBO_TRIPLE".equals(attackName) && battle.isPlayerTurn()) {
+            battleService.executePlayerCombo(battleId, new ComboTripleAttackFactory().createCombo());
+        } else if (battle.isPlayerTurn()) {
             battleService.executePlayerAttack(battleId, attackName);
         } else {
             battleService.executeEnemyAttack(battleId, attackName);
