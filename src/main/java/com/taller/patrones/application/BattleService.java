@@ -1,5 +1,7 @@
 package com.taller.patrones.application;
 
+import com.taller.patrones.application.command.ApplyDamageCommand;
+import com.taller.patrones.application.command.AttackCommand;
 import com.taller.patrones.application.event.AnalyticsListener;
 import com.taller.patrones.application.event.AnalyticsLogListener;
 import com.taller.patrones.application.event.BattleEventListener;
@@ -23,6 +25,8 @@ import com.taller.patrones.infrastructure.combat.attackFactory.TackleAttackFacto
 import com.taller.patrones.infrastructure.combat.attackFactory.ThunderAttackFactory;
 import com.taller.patrones.infrastructure.persistence.BattleRepository;
 
+import java.util.Deque;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -57,6 +61,7 @@ public class BattleService {
             new AnalyticsListener(),
             new AnalyticsLogListener()
     );
+    private final Map<Battle, Deque<AttackCommand>> commandhistory = new HashMap<>();
 
     public static final List<String> PLAYER_ATTACKS = List.of("TACKLE", "SLASH", "FIREBALL", "ICE_BEAM", "POISON_STING", "THUNDER");
     public static final List<String> ENEMY_ATTACKS = List.of("TACKLE", "SLASH", "FIREBALL");
@@ -112,17 +117,25 @@ public class BattleService {
     }
 
     private void applyDamage(Battle battle, Character attacker, Character defender, int damage, Attack attack) {
-        defender.takeDamage(damage);
-        String target = defender == battle.getPlayer() ? "player" : "enemy";
-        battle.setLastDamage(damage, target);
-        battle.switchTurn();
-        if (!defender.isAlive()) {
-            battle.finish(attacker.getName());
-        }
+        AttackCommand attackCommand = new ApplyDamageCommand(attack, damage, defender, attacker, battle);
+        attackCommand.execute();
 
-        for (BattleEventListener listener: listeners) {
+        commandhistory
+                .computeIfAbsent(battle, k -> new java.util.ArrayDeque<>())
+                .push(attackCommand);
+
+        for (BattleEventListener listener : listeners) {
             listener.update(battle, attacker, defender, damage, attack);
         }
+    }
+
+    public void undoLastDamage(Battle battle) {
+        if (battle == null)
+            return;
+
+        Deque<AttackCommand> history = commandhistory.get(battle);
+        if (history != null && !history.isEmpty())
+            history.pop().undo();
     }
 
     public BattleStartResult startBattleFromExternal(Character player, Character enemy) {
