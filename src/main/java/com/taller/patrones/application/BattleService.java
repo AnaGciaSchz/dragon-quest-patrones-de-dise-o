@@ -1,5 +1,8 @@
 package com.taller.patrones.application;
 
+import com.taller.patrones.application.event.AnalyticsListener;
+import com.taller.patrones.application.event.AnalyticsLogListener;
+import com.taller.patrones.application.event.BattleEventListener;
 import com.taller.patrones.domain.Attack;
 import com.taller.patrones.domain.Battle;
 import com.taller.patrones.domain.Character;
@@ -49,6 +52,10 @@ public class BattleService {
             Attack.AttackType.SPECIAL, new SpecialDamageStrategy(),
             Attack.AttackType.STATUS, new StatusDamageStrategy(),
             Attack.AttackType.CRITICAL, new CriticalDamageStrategy()
+    );
+    private final List<BattleEventListener> listeners = List.of(
+            new AnalyticsListener(),
+            new AnalyticsLogListener()
     );
 
     public static final List<String> PLAYER_ATTACKS = List.of("TACKLE", "SLASH", "FIREBALL", "ICE_BEAM", "POISON_STING", "THUNDER");
@@ -108,10 +115,13 @@ public class BattleService {
         defender.takeDamage(damage);
         String target = defender == battle.getPlayer() ? "player" : "enemy";
         battle.setLastDamage(damage, target);
-        battle.log(attacker.getName() + " usa " + attack.getName() + " y hace " + damage + " de daño a " + defender.getName());
         battle.switchTurn();
         if (!defender.isAlive()) {
             battle.finish(attacker.getName());
+        }
+
+        for (BattleEventListener listener: listeners) {
+            listener.update(battle, attacker, defender, damage, attack);
         }
     }
 
